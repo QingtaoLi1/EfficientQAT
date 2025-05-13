@@ -515,7 +515,7 @@ def train():
         logger.info(f'Average Acc: {total_acc/len(task_list)*100:.2f}%')
 
     if args.do_mmlu_eval:
-        lm_eval_model = HFLM(pretrained=model, batch_size=16)
+        lm_eval_model = HFLM(pretrained=model, batch_size=8)
         task_manager = lm_eval.tasks.TaskManager()
         results = lm_eval.simple_evaluate( # call simple_evaluate
         model=lm_eval_model,

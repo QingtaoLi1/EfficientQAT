@@ -71,7 +71,7 @@ def main():
                         help="use real quantization instead of fake quantization, can reduce memory footprint")
     parser.add_argument("--resume_quant", type=str, default=None,  help="model path of resumed quantized model")
     parser.add_argument("--calib_dataset",type=str,default="redpajama",
-        choices=["wikitext2", "ptb", "c4", "mix", "redpajama"],
+        choices=["wikitext2", "ptb", "c4", "mix", "redpajama", "math220k"],
         help="Where to extract calibration data from.")
     parser.add_argument("--train_size", type=int, default=4096, help="Number of training data samples.")
     parser.add_argument("--val_size", type=int, default=64, help="Number of validation data samples.")
@@ -124,7 +124,7 @@ def main():
     else:
         # load fp quantized model
         config = AutoConfig.from_pretrained(args.model)
-        tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False,legacy=False)
+        tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True,legacy=False)
         model = AutoModelForCausalLM.from_pretrained(args.model, config=config, device_map='cpu',torch_dtype=torch.float16)
         for param in model.parameters():
             param.requires_grad = False

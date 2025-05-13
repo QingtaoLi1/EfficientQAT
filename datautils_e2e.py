@@ -3,7 +3,7 @@ import torch
 from typing import Dict, Sequence
 from datasets import load_dataset
 import os
-from itertools import chain
+from itertools import chain, zip_longest
 from pathlib import Path
 from transformers import default_data_collator
 import transformers
@@ -143,12 +143,32 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     split=f"train[{validation_split}:]",
                 )
             return dataset  
+        elif dataset_name == "math220k_default":
+            return load_dataset("open-r1/OpenR1-Math-220k", "default", split="train")
+        elif dataset_name == "math220k_extended":
+            return load_dataset("open-r1/OpenR1-Math-220k", "extended", split="train")
+        elif dataset_name == "math220k_all":
+            return load_dataset("open-r1/OpenR1-Math-220k", "all", split="train")
         else:
             raise NotImplementedError(f"Dataset {dataset_name} not implemented yet.")
         
 
     def format_dataset(dataset, dataset_format):
-        if (
+        def extract_math220k_dataset(example):
+            problem = "Please reason step by step, and put your final answer within \\boxed{}. " + example['problem']
+            correctness_math_verify = example['correctness_math_verify']
+            correctness_llama = [] if example['correctness_llama'] is None else example['correctness_llama']
+            generations = example['generations']
+            for verified_math, verified_llama, generation in zip_longest(correctness_math_verify, correctness_llama, generations, fillvalue=None):
+                if verified_math or verified_llama:
+                    return {
+                        'input': problem,
+                        'output': generation,
+                    }
+
+        if dataset_format == 'math220k':
+            dataset = dataset.map(extract_math220k_dataset)
+        elif (
             dataset_format == 'alpaca' or dataset_format == 'alpaca-clean' or
             (dataset_format is None and args.dataset in ['alpaca', 'alpaca-clean'])
         ):

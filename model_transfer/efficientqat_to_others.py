@@ -21,7 +21,7 @@ def main():
 
 
     args = parser.parse_args()
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False,legacy=False)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True,legacy=False)
     quant_config = QuantizeConfig(
     bits=args.wbits,  
     group_size=args.group_size,

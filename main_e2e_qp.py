@@ -263,7 +263,7 @@ def get_accelerate_model(args, checkpoint_dir):
     model.cuda()
     model.train()
         
-    if tokenizer._pad_token is None:
+    if not hasattr(tokenizer, "_pad_token") or tokenizer._pad_token is None:
         smart_tokenizer_and_embedding_resize(
             special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
             tokenizer=tokenizer,

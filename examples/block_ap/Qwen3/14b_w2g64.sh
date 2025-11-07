@@ -1,0 +1,12 @@
+CUDA_VISIBLE_DEVICES=0 python main_block_ap.py \
+--model /home/qingtaoli/mnt/models/Qwen/Qwen3-14B  \
+--output_dir /home/qingtaoli/mnt/checkpoints/Qwen/Qwen3-14B/EQAT \
+--net Qwen3 \
+--wbits 2 \
+--group_size 64 \
+--quant_lr 1e-4 \
+--weight_lr 2e-5 \
+--real_quant \
+--eval_ppl \
+--eval_tasks piqa,arc_easy,arc_challenge,hellaswag,winogrande \
+--save_quant_dir /home/qingtaoli/mnt/checkpoints/Qwen/Qwen3-14B/EQAT/block_ap_models

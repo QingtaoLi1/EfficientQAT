@@ -19,14 +19,15 @@ from torch.utils.data import DataLoader
 import shutil
 import os
 
-def update_dataset(layer, dataset, dev, attention_mask, position_ids):
+def update_dataset(rotary_emb, layer, dataset, dev, attention_mask, position_ids):
     with torch.no_grad():
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast(device_type="cuda"):
             for index, inps in enumerate(dataset):
                 inps = inps.to(dev)
                 if len(inps.shape)==2:
                     inps = inps.unsqueeze(0)
-                new_data = layer(inps, attention_mask=attention_mask,position_ids=position_ids)[0].to('cpu')
+                position_embeddings = rotary_emb(inps, position_ids)
+                new_data = layer(inps, attention_mask=attention_mask, position_ids=position_ids, position_embeddings=position_embeddings)[0].to('cpu')
                 dataset.update_data(index,new_data)
 
                     
@@ -119,6 +120,7 @@ def block_ap(
     attention_mask = layers[0].attention_mask
     position_ids = layers[0].position_ids
     layers[0] = layers[0].module
+    print(f"attention_mask shape {None if attention_mask is None else attention_mask.shape}, position_ids shape {None if position_ids is None else position_ids.shape}")
     if attention_mask is not None:
         attention_mask_batch = attention_mask.repeat(args.batch_size,1,1,1).float()
     else:
@@ -174,8 +176,8 @@ def block_ap(
         # step 6.2: obtain output of full-precision model for MSE
         set_quant_state(qlayer,weight_quant=False) # deactivate quantization for obtaining ground truth
         if args.epochs > 0:
-            update_dataset(qlayer,fp_train_inps,dev,attention_mask,position_ids)
-            update_dataset(qlayer,fp_val_inps,dev,attention_mask,position_ids)
+            update_dataset(model.model.rotary_emb, qlayer,fp_train_inps,dev,attention_mask,position_ids)
+            update_dataset(model.model.rotary_emb, qlayer,fp_val_inps,dev,attention_mask,position_ids)
         set_quant_state(qlayer,weight_quant=True)  # activate quantization
         
         
@@ -220,10 +222,11 @@ def block_ap(
                 start_time = time.time()
                 for index, (quant_inps, fp_inps) in enumerate(zip(quant_train_inps, fp_train_inps)):    
                     # obtain output of quantization model
-                    with torch.cuda.amp.autocast():
+                    with torch.amp.autocast(device_type="cuda"):
                         input = quant_inps.to(dev)
                         label = fp_inps.to(dev)
-                        quant_out = qlayer(input, attention_mask=attention_mask_batch,position_ids=position_ids)[0]
+                        position_embeddings = model.model.rotary_emb(input, position_ids)
+                        quant_out = qlayer(input, attention_mask=attention_mask_batch,position_ids=position_ids, position_embeddings=position_embeddings)[0]
                         reconstruction_loss = loss_func(label, quant_out)
                         loss =  reconstruction_loss
 
@@ -248,10 +251,11 @@ def block_ap(
                 for index, (quant_inps,fp_inps) in enumerate(zip(quant_val_inps, fp_val_inps)):  
                     # obtain output of quantization model
                     with torch.no_grad():
-                        with torch.cuda.amp.autocast():
+                        with torch.amp.autocast(device_type="cuda"):
                             input = quant_inps.to(dev)
                             label = fp_inps.to(dev)
-                            quant_out = qlayer(input, attention_mask=attention_mask_batch,position_ids=position_ids)[0]
+                            position_embeddings = model.model.rotary_emb(input, position_ids)
+                            quant_out = qlayer(input, attention_mask=attention_mask_batch,position_ids=position_ids, position_embeddings=position_embeddings)[0]
                             reconstruction_loss = loss_func(label, quant_out)
                     val_loss_list.append(reconstruction_loss.cpu())
                  
@@ -276,8 +280,8 @@ def block_ap(
 
         # step 6.7: update inputs of quantization model
         if args.epochs>0:
-            update_dataset(qlayer,quant_train_inps,dev,attention_mask,position_ids)
-            update_dataset(qlayer,quant_val_inps,dev,attention_mask,position_ids)
+            update_dataset(model.model.rotary_emb, qlayer,quant_train_inps,dev,attention_mask,position_ids)
+            update_dataset(model.model.rotary_emb, qlayer,quant_val_inps,dev,attention_mask,position_ids)
         layers[block_index] = qlayer.to("cpu")
 
         # step 7: pack quantized weights into low-bits format, note that this process is slow on poor CPU or busy CPU

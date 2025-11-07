@@ -12,8 +12,8 @@ import os
 
 def get_wikitext2(tokenizer, train_size, val_size, seed, seqlen, test_only):
     print("get_wikitext2")
-    traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train')
-    testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
+    traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train', trust_remote_code=True)
+    testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test', trust_remote_code=True)
 
     testenc = tokenizer("\n\n".join(testdata['text']), return_tensors='pt')
     if test_only:
@@ -50,19 +50,19 @@ def get_c4(tokenizer, train_size, val_size, seed, seqlen, test_only):
                     data_files={
                         "train": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-6fbe877195f42de5/0.0.0/0f7e3662623656454fcd2b650f34e886a7db4b9104504885bd462096cc7a9f51/json-train-00000-of-00002.arrow",
                         "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
-                    },split='train'
+                    }, split='train', trust_remote_code=True
                     )
         valdata = load_dataset("arrow",
                     data_files={
                         "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
-                    },split='validation'
+                    }, split='validation', trust_remote_code=True
                     )
     except:
         traindata = load_dataset(
-            'allenai/c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train'
+            'allenai/c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train', trust_remote_code=True
         )
         valdata = load_dataset(
-            'allenai/c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation'
+            'allenai/c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation', trust_remote_code=True
         )
 
     random.seed(0)
@@ -118,9 +118,9 @@ def get_redpajama(tokenizer, train_size, val_size, seed, seqlen):
     print("get_redpajama")
     try:
         loacal_dataset = "/cpfs01/user/chenmengzhao/huggingface/datasets/togethercomputer___red_pajama-data-1_t-sample"
-        traindata = load_dataset(loacal_dataset,split='train')   
+        traindata = load_dataset(loacal_dataset, split='train', trust_remote_code=True)   
     except:
-        traindata = load_dataset("togethercomputer/RedPajama-Data-1T-Sample",split='train')   
+        traindata = load_dataset("togethercomputer/RedPajama-Data-1T-Sample", split='train', trust_remote_code=True)   
     random.seed(seed)
     traindata = traindata.shuffle(seed=seed) 
     trainloader = []

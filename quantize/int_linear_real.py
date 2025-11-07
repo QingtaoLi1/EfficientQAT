@@ -190,7 +190,7 @@ def load_quantized_model(model_path, wbits, group_size):
     torch.cuda.empty_cache()
     gc.collect()
     model.tie_weights()
-    device_map = infer_auto_device_map(model)
+    device_map = infer_auto_device_map(model, max_memory={0: "70GB"})
     print("Loading pre-computed quantized weights...")
     load_checkpoint_in_model(model,checkpoint=model_path,device_map=device_map,offload_state_dict=True)
     print("Loading pre-computed quantized weights Successfully")

@@ -98,49 +98,54 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     """
     def load_data(dataset_name):
         if dataset_name == 'alpaca':
-            return load_dataset("tatsu-lab/alpaca")
+            return load_dataset("tatsu-lab/alpaca", trust_remote_code=True)
         elif dataset_name == 'oasst1':
-            return load_dataset("timdettmers/openassistant-guanaco")
+            return load_dataset("timdettmers/openassistant-guanaco", trust_remote_code=True)
         elif dataset_name == 'deita-6k':
-            dataset = load_dataset("hkust-nlp/deita-6k-v0", split = "train")
+            dataset = load_dataset("hkust-nlp/deita-6k-v0", split = "train", trust_remote_code=True)
             dataset = [row for row in dataset]
             return dataset
         elif dataset_name == 'deita-10k':
-            dataset = load_dataset("hkust-nlp/deita-10k-v0", split = "train")
+            dataset = load_dataset("hkust-nlp/deita-10k-v0", split = "train", trust_remote_code=True)
             dataset = [row for row in dataset]
             return dataset
         elif dataset_name == 'c4':
             try:
                 # load from local file, a fast manner
                 dataset = load_dataset("arrow",
-                data_files={
-                    "train": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-6fbe877195f42de5/0.0.0/0f7e3662623656454fcd2b650f34e886a7db4b9104504885bd462096cc7a9f51/json-train-00000-of-00002.arrow",
-                    "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
-                },
+                    data_files={
+                        "train": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-6fbe877195f42de5/0.0.0/0f7e3662623656454fcd2b650f34e886a7db4b9104504885bd462096cc7a9f51/json-train-00000-of-00002.arrow",
+                        "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
+                    },
+                    trust_remote_code=True,
                 )
             except:
-                dataset = load_dataset("allenai/c4","allenai--c4",
-                data_files={
-                    "train": "en/c4-train.00000-of-01024.json.gz",
-                    "validation": "en/c4-validation.00000-of-00008.json.gz",
-                },
+                dataset = load_dataset("allenai/c4",
+                    data_files={
+                        "train": "en/c4-train.00000-of-01024.json.gz",
+                        "validation": "en/c4-validation.00000-of-00008.json.gz",
+                    },
+                    trust_remote_code=True,
                 )
             return dataset
         elif dataset_name == 'redpajama':
             try:
                 loacal_dataset = "/cpfs01/user/chenmengzhao/huggingface/datasets/togethercomputer___red_pajama-data-1_t-sample"
-                dataset = load_dataset(loacal_dataset)
+                dataset = load_dataset(loacal_dataset, trust_remote_code=True)
             except:
-                dataset = load_dataset("togethercomputer/RedPajama-Data-1T-Sample")   
+                loacal_dataset = "togethercomputer/RedPajama-Data-1T-Sample"
+                dataset = load_dataset(loacal_dataset, trust_remote_code=True)
             if "validation" not in dataset.keys():
                 validation_split = args.eval_dataset_size
                 dataset["validation"] = load_dataset(
                     loacal_dataset,
                     split=f"train[:{validation_split}]",
+                    trust_remote_code=True,
                 )
                 dataset["train"] = load_dataset(
                     loacal_dataset,
                     split=f"train[{validation_split}:]",
+                    trust_remote_code=True,
                 )
             return dataset  
         else:
